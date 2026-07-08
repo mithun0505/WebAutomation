@@ -1,20 +1,22 @@
 import { test, expect } from '@playwright/test';
 
-test('EPAM: Services -> Explore Our Client Work', async ({ page }) => {
-  await page.goto('https://www.epam.com/', { waitUntil: 'domcontentloaded' });
-  await page.waitForLoadState('networkidle');
+test('EPAM Services -> Explore Our Client Work shows Client Work text', async ({ page, context }) => {
+  await page.goto('https://www.epam.com/');
 
-  const servicesMenu = page.getByRole('link', { name: /Services/i });
-  await expect(servicesMenu).toBeVisible({ timeout: 15000 });
-  await servicesMenu.scrollIntoViewIfNeeded();
+  const servicesMenu = page.getByRole('link', { name: 'Services' });
+  await expect(servicesMenu).toBeVisible();
   await servicesMenu.hover();
 
-  const clientWorkLink = page.getByRole('link', { name: /Explore Our Client Work/i });
-  await expect(clientWorkLink).toBeVisible({ timeout: 10000 });
-  await clientWorkLink.click();
+  const exploreClientWork = page.getByRole('link', { name: 'Explore Our Client Work' });
+  await expect(exploreClientWork).toBeVisible();
 
-  await page.waitForLoadState('domcontentloaded');
+  const [newPage] = await Promise.all([
+    context.waitForEvent('page').catch(() => null),
+    exploreClientWork.click(),
+  ]);
 
-  const clientWorkText = page.getByText(/Client Work/i);
-  await expect(clientWorkText).toBeVisible({ timeout: 15000 });
+  const targetPage = newPage ?? page;
+  await targetPage.waitForLoadState('domcontentloaded');
+
+  await expect(targetPage.getByText('Client Work', { exact: false })).toBeVisible();
 });
